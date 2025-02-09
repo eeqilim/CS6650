@@ -1,0 +1,13 @@
+<component name="ArtifactManager">
+  <artifact type="exploded-war" name="skiers-api-server:war exploded">
+    <output-path>$PROJECT_DIR$/out/artifacts/skiers_api_server_war_exploded</output-path>
+    <root id="root">
+      <element id="javaee-facet-resources" facet="skiers-api-server/web/Web" />
+      <element id="directory" name="WEB-INF">
+        <element id="directory" name="classes">
+          <element id="module-output" name="skiers-api-server" />
+        </element>
+      </element>
+    </root>
+  </artifact>
+</component>

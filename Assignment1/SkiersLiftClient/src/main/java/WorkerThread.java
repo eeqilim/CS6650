@@ -1,0 +1,70 @@
+import org.apache.hc.client5.http.impl.DefaultHttpRequestRetryStrategy;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.HttpClients;
+import org.apache.hc.core5.http.HttpResponse;
+import org.apache.hc.core5.http.io.entity.StringEntity;
+import org.apache.hc.core5.http.io.support.ClassicRequestBuilder;
+import org.apache.hc.core5.http.protocol.HttpContext;
+import org.apache.hc.core5.util.TimeValue;
+
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.atomic.AtomicInteger;
+
+public class WorkerThread implements Runnable {
+    private final BlockingQueue<String[]> queue;
+    private final int MAX_RETRIES = 5;
+    private final AtomicInteger successfulRequestCount;
+
+    public WorkerThread(BlockingQueue<String[]> queue, int numOfRequests, AtomicInteger successRequestCount) {
+        this.queue = queue;
+        this.successfulRequestCount = successRequestCount;
+    }
+
+    @Override
+    public void run() {
+        try (CloseableHttpClient httpClient = HttpClients.custom()
+                .setRetryStrategy(new DefaultHttpRequestRetryStrategy(MAX_RETRIES, TimeValue.ofSeconds(1)) {
+                    @Override
+                    public boolean retryRequest(HttpResponse response, int executionCount, HttpContext context) {
+                        return executionCount <= MAX_RETRIES && response != null && response.getCode() >= 400;
+                    }
+                })
+                .build()) {
+
+            while (!queue.isEmpty()) {
+                String[] requestData = queue.poll();
+                if (requestData == null)
+                    continue;
+
+                sendPostRequest(httpClient, requestData[0], requestData[1]);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void sendPostRequest(CloseableHttpClient httpClient, String url, String jsonPayload) {
+        try {
+            httpClient.execute(
+                    ClassicRequestBuilder.post(url)
+                            .setHeader("Content-Type", "application/json")
+                            .setEntity(new StringEntity(jsonPayload, StandardCharsets.UTF_8))
+                            .build(),
+                    response -> {
+                        int statusCode = response.getCode();
+                        if (statusCode == 201) {
+                            successfulRequestCount.incrementAndGet();
+                        }
+                        else {
+                            System.err.println("Request failed with status: " + statusCode);
+                            }
+                        return statusCode;
+                    }
+            );
+        } catch (IOException e) {
+            System.err.println("Request error: " + e.getMessage());
+        }
+    }
+}
