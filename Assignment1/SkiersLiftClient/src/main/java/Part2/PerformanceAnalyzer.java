@@ -6,7 +6,7 @@ import java.util.*;
 import java.util.concurrent.BlockingQueue;
 
 public class PerformanceAnalyzer {
-    public static void processMetrics(String csvPath, BlockingQueue<String[]> metricsQueue) {
+    public static void processMetrics(String csvPath, BlockingQueue<String[]> metricsQueue, String plotTitle, String imgPath) {
         List<Long> latencies = new ArrayList<>();
         List<Long> timestamps = new ArrayList<>();
 
@@ -17,8 +17,8 @@ public class PerformanceAnalyzer {
         Collections.sort(latencies);
         calculateMetrics(latencies, earliestStartTime, latestEndTime);
 
-        Map<Long, Long> throughputData = calculateThroughput(timestamps, 1000);
-        ThroughputPlotter.plotThroughput(throughputData);
+        Map<Long, Long> throughputData = calculateThroughput(timestamps);
+        ThroughputPlotter.plotThroughput(plotTitle, throughputData, imgPath);
     }
 
     private static long[] writeToCsv(String csvPath, BlockingQueue<String[]> metricsQueue, List<Long> latencies, List<Long> timestamps) {
@@ -75,11 +75,11 @@ public class PerformanceAnalyzer {
         System.out.println("Max Response Time (ms): " + maxResponseTime);
     }
 
-    private static Map<Long, Long> calculateThroughput(List<Long> timestamps, long intervalDurationMs) {
+    private static Map<Long, Long> calculateThroughput(List<Long> timestamps) {
         Map<Long, Long> throughputMap = new HashMap<>();
 
         for (long startTime : timestamps) {
-            long intervalStart = (startTime / intervalDurationMs) * intervalDurationMs;
+            long intervalStart = (startTime / 1000) * 1000;
             throughputMap.put(intervalStart, throughputMap.getOrDefault(intervalStart, 0L) + 1);
         }
         return throughputMap;

@@ -6,12 +6,16 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class Main {
     private static final String SERVER_URL = "http://localhost:8080/skiers_api_server_war_exploded/";
-    private static final String CSV_PATH = "src/main/java/Part2";
+    private static final String CSV_PATH = "src/main/java/Part2/metrics.csv";
+    private static final String IMG_PATH = "src/main/java/Part2/plot.png";
+    private static final String PLOT_TITLE = "Throughput over time";
+
     private static final int TOTAL_REQUESTS = 200000;
     private static final int INITIAL_THREAD_COUNT = 32;
     private static final int REQUESTS_PER_INITIAL_THREAD = 1000;
     private static final int SECOND_PHASE_THREAD_COUNT = 336;
     private static final int REQUESTS_PER_SECOND_PHASE_THREAD = 500;
+
     private static final BlockingQueue<String[]> reqQueue = new LinkedBlockingQueue<>();
     private static final BlockingQueue<String[]> metricsQueue = new LinkedBlockingQueue<>();
     private static final AtomicInteger successfulRequestCount = new AtomicInteger(0);
@@ -55,7 +59,7 @@ public class Main {
         System.out.println("Total time (ms): " + totalTime);
         System.out.println("Throughput (requests/sec): " + (successfulRequestCount.get() / (totalTime / 1000.0)));
 
-        PerformanceAnalyzer.processMetrics(CSV_PATH, metricsQueue);
+        PerformanceAnalyzer.processMetrics(CSV_PATH, metricsQueue, PLOT_TITLE, IMG_PATH);
     }
 
     private static void executeWorkerThreads(ExecutorService executor, CountDownLatch latch, int threadCount, int requestsPerThread) {
