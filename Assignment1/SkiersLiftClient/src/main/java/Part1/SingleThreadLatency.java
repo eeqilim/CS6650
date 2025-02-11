@@ -1,3 +1,5 @@
+package Part1;
+
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -5,18 +7,19 @@ public class SingleThreadLatency {
     private static final String SERVER_URL = "http://localhost:8080/skiers_api_server_war_exploded/";
     private static final int REQUESTS_PER_THREAD = 10000;
     private static final int SINGLE_THREAD = 1;
-    private static final BlockingQueue<String[]> queue = new LinkedBlockingQueue<>();
+    private static final BlockingQueue<String[]> reqQueue = new LinkedBlockingQueue<>();
+    private static final BlockingQueue<String[]> metricsQueue = new LinkedBlockingQueue<>();
     private static final AtomicInteger successfulRequestCount = new AtomicInteger(0);
 
     public static void main(String[] args) throws InterruptedException {
-        Thread generatorThread = new Thread(new RideEventGenerator(queue, REQUESTS_PER_THREAD, SERVER_URL));
+        Thread generatorThread = new Thread(new RideEventGenerator(reqQueue, REQUESTS_PER_THREAD, SERVER_URL));
         generatorThread.start();
         generatorThread.join();
 
         ExecutorService executor = Executors.newFixedThreadPool(SINGLE_THREAD);
         long startTime = System.currentTimeMillis();
 
-        executor.execute(new WorkerThread(queue, REQUESTS_PER_THREAD, successfulRequestCount));
+        executor.execute(new WorkerThread(reqQueue, metricsQueue, REQUESTS_PER_THREAD, successfulRequestCount));
         executor.shutdown();
 
         if (!executor.awaitTermination(1, TimeUnit.MINUTES)) {

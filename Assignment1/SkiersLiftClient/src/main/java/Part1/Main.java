@@ -1,18 +1,23 @@
+package Part1;
+
+import Part2.PerformanceAnalyzer;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class Main {
     private static final String SERVER_URL = "http://localhost:8080/skiers_api_server_war_exploded/";
+    private static final String CSV_PATH = "src/main/java/Part2";
     private static final int TOTAL_REQUESTS = 200000;
     private static final int INITIAL_THREAD_COUNT = 32;
     private static final int REQUESTS_PER_INITIAL_THREAD = 1000;
     private static final int SECOND_PHASE_THREAD_COUNT = 336;
     private static final int REQUESTS_PER_SECOND_PHASE_THREAD = 500;
-    private static final BlockingQueue<String[]> queue = new LinkedBlockingQueue<>();
+    private static final BlockingQueue<String[]> reqQueue = new LinkedBlockingQueue<>();
+    private static final BlockingQueue<String[]> metricsQueue = new LinkedBlockingQueue<>();
     private static final AtomicInteger successfulRequestCount = new AtomicInteger(0);
 
     public static void main(String[] args) throws InterruptedException {
-        Thread generatorThread = new Thread(new RideEventGenerator(queue, TOTAL_REQUESTS, SERVER_URL));
+        Thread generatorThread = new Thread(new RideEventGenerator(reqQueue, TOTAL_REQUESTS, SERVER_URL));
         generatorThread.start();
         generatorThread.join();
 
@@ -49,13 +54,15 @@ public class Main {
         System.out.println("Unsuccessful requests: " + (TOTAL_REQUESTS - successfulRequestCount.get()));
         System.out.println("Total time (ms): " + totalTime);
         System.out.println("Throughput (requests/sec): " + (successfulRequestCount.get() / (totalTime / 1000.0)));
+
+        PerformanceAnalyzer.processMetrics(CSV_PATH, metricsQueue);
     }
 
     private static void executeWorkerThreads(ExecutorService executor, CountDownLatch latch, int threadCount, int requestsPerThread) {
         for (int i = 0; i < threadCount; i++) {
             executor.execute(() -> {
                 try {
-                    new WorkerThread(queue, requestsPerThread, successfulRequestCount).run();
+                    new WorkerThread(reqQueue, metricsQueue, requestsPerThread, successfulRequestCount).run();
                 } finally {
                     latch.countDown();
                 }
