@@ -6,7 +6,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class Main {
     private static final String SERVER_URL = "http://localhost:8080/skiers_api_server_war_exploded/";
-    private static final String CSV_PATH = "src/main/java/Part2/metrics.csv";
+    private static final String CSV_PATH = "src/main/java/Part2/result.csv";
     private static final String IMG_PATH = "src/main/java/Part2/plot.png";
     private static final String PLOT_TITLE = "Throughput over time";
 

@@ -34,7 +34,11 @@ public class WorkerThread implements Runnable {
                 .setRetryStrategy(new DefaultHttpRequestRetryStrategy(MAX_RETRIES, TimeValue.ofSeconds(1)) {
                     @Override
                     public boolean retryRequest(HttpResponse response, int executionCount, HttpContext context) {
-                        return executionCount <= MAX_RETRIES && response != null && response.getCode() >= 400;
+                        int statusCode = response.getCode();
+                        if (statusCode >= 400) {
+                            System.out.println("Attempt " + executionCount + " failed with status: " + statusCode);
+                        }
+                        return executionCount < MAX_RETRIES && statusCode >= 400;
                     }
                 })
                 .build()) {
@@ -55,6 +59,9 @@ public class WorkerThread implements Runnable {
     }
 
     private int sendPostRequest(CloseableHttpClient httpClient, String url, String jsonPayload) throws IOException {
+        System.out.println("Sending request to: " + url);
+        System.out.println("JSON Payload: " + jsonPayload);
+
         return httpClient.execute(
                 ClassicRequestBuilder.post(url)
                         .setHeader("Content-Type", "application/json")

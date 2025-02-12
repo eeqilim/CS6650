@@ -30,10 +30,14 @@ public class RideEventGenerator implements Runnable {
                 int dayID = 1;
                 int time = random.nextInt(360) + 1;
 
-                String url = serverUrl + "skiers/" + resortID + "/seasons/" + seasonID + "/days/" + dayID + "/skiers/" + skierID;
+                String url = serverUrl + "skiers/" + resortID + "/seasons/" + seasonID + "/days/" + dayID + "/skier/" + skierID;
 
                 Map<String, Integer> event = new HashMap<>();
+                event.put("skierID", skierID);
+                event.put("resortID", resortID);
                 event.put("liftID", liftID);
+                event.put("seasonID", seasonID);
+                event.put("dayID", dayID);
                 event.put("time", time);
                 String jsonEvent = gson.toJson(event);
 
