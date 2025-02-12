@@ -42,7 +42,7 @@ public class SkierServlet extends HttpServlet {
         } catch (NumberFormatException e) {
             return false;
         }
-        return urlPath[2].equals("seasons") && urlPath[4].equals("days") && urlPath[6].equals("skier");
+        return urlPath[2].equals("seasons") && urlPath[4].equals("days") && urlPath[6].equals("skiers");
     }
 
     @Override

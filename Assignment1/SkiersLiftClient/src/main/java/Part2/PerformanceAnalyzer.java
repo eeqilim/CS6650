@@ -6,7 +6,7 @@ import java.util.*;
 import java.util.concurrent.BlockingQueue;
 
 public class PerformanceAnalyzer {
-    public static void processMetrics(String csvPath, BlockingQueue<String[]> metricsQueue, String plotTitle, String imgPath) {
+    public static void processMetrics(String csvPath, BlockingQueue<String[]> metricsQueue, String imgPath, String plotTitle) {
         List<Long> latencies = new ArrayList<>();
         List<Long> timestamps = new ArrayList<>();
 
@@ -79,7 +79,7 @@ public class PerformanceAnalyzer {
         Map<Long, Long> throughputMap = new HashMap<>();
 
         for (long startTime : timestamps) {
-            long intervalStart = (startTime / 1000) * 1000;
+            long intervalStart = startTime / 1000;
             throughputMap.put(intervalStart, throughputMap.getOrDefault(intervalStart, 0L) + 1);
         }
         return throughputMap;

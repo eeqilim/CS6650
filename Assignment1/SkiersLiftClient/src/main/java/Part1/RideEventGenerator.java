@@ -30,7 +30,7 @@ public class RideEventGenerator implements Runnable {
                 int dayID = 1;
                 int time = random.nextInt(360) + 1;
 
-                String url = serverUrl + "skiers/" + resortID + "/seasons/" + seasonID + "/days/" + dayID + "/skier/" + skierID;
+                String url = serverUrl + "skiers/" + resortID + "/seasons/" + seasonID + "/days/" + dayID + "/skiers/" + skierID;
 
                 Map<String, Integer> event = new HashMap<>();
                 event.put("skierID", skierID);

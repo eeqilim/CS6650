@@ -5,10 +5,10 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class Main {
-    private static final String SERVER_URL = "http://localhost:8080/skiers_api_server_war_exploded/";
+    private static final String SERVER_URL = "http://ec2-35-88-237-65.us-west-2.compute.amazonaws.com:8080/skiers-api-server_war/";
     private static final String CSV_PATH = "src/main/java/Part2/result.csv";
     private static final String IMG_PATH = "src/main/java/Part2/plot.png";
-    private static final String PLOT_TITLE = "Throughput over time";
+    private static final String PLOT_TITLE = "Throughput Over Time";
 
     private static final int TOTAL_REQUESTS = 200000;
     private static final int INITIAL_THREAD_COUNT = 32;
@@ -59,7 +59,7 @@ public class Main {
         System.out.println("Total time (ms): " + totalTime);
         System.out.println("Throughput (requests/sec): " + (successfulRequestCount.get() / (totalTime / 1000.0)));
 
-        PerformanceAnalyzer.processMetrics(CSV_PATH, metricsQueue, PLOT_TITLE, IMG_PATH);
+        PerformanceAnalyzer.processMetrics(CSV_PATH, metricsQueue, IMG_PATH, PLOT_TITLE);
     }
 
     private static void executeWorkerThreads(ExecutorService executor, CountDownLatch latch, int threadCount, int requestsPerThread) {

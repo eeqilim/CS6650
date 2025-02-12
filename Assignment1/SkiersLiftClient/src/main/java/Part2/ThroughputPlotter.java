@@ -15,7 +15,7 @@ import java.util.Map;
 public class ThroughputPlotter {
     public static void plotThroughput(String plotTitle, Map<Long, Long> throughputData, String imgPath) {
         JFreeChart chart = ChartFactory.createLineChart(
-                plotTitle, "Time (ms)", "Throughput (requests/sec)",
+                plotTitle, "Time (sec)", "Throughput (requests/sec)",
                 createDataset(throughputData), PlotOrientation.VERTICAL,true, true, false
         );
         ChartPanel chartPanel = new ChartPanel(chart);
