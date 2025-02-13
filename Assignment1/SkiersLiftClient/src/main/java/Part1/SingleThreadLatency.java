@@ -6,7 +6,8 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class SingleThreadLatency {
-    private static final String SERVER_URL = "http://localhost:8080/skiers_api_server_war_exploded/";
+//    private static final String SERVER_URL = "http://localhost:8080/skiers_api_server_war_exploded/";
+    private static final String SERVER_URL = "http://ec2-35-85-33-218.us-west-2.compute.amazonaws.com:8080/skiers-api-server_war/";
     private static final int REQUESTS_PER_THREAD = 10000;
     private static final int SINGLE_THREAD = 1;
     private static final BlockingQueue<String[]> reqQueue = new LinkedBlockingQueue<>();
@@ -24,10 +25,10 @@ public class SingleThreadLatency {
         ExecutorService executor = Executors.newFixedThreadPool(SINGLE_THREAD);
         long startTime = System.currentTimeMillis();
 
-        executor.execute(new WorkerThread(reqQueue, metricsQueue, REQUESTS_PER_THREAD, successfulRequestCount));
+        executor.submit(new WorkerThread(reqQueue, metricsQueue, REQUESTS_PER_THREAD, successfulRequestCount));
         executor.shutdown();
 
-        if (!executor.awaitTermination(1, TimeUnit.MINUTES)) {
+        if (!executor.awaitTermination(5, TimeUnit.MINUTES)) {
             System.err.println("Executor did not terminate. Force shutdown.");
             executor.shutdownNow();
         }
@@ -39,7 +40,8 @@ public class SingleThreadLatency {
         System.out.println("Unsuccessful requests: " + (REQUESTS_PER_THREAD - successfulRequestCount.get()));
         System.out.println("Total time (ms): " + totalTime);
         System.out.println("Throughput (requests/sec): " + (successfulRequestCount.get() / (totalTime / 1000.0)));
+        System.out.println();
 
-        PerformanceAnalyzer.processMetrics(CSV_PATH, metricsQueue, IMG_PATH, PLOT_TITLE);
+        PerformanceAnalyzer.processMetrics(CSV_PATH, metricsQueue, IMG_PATH, PLOT_TITLE, successfulRequestCount);
     }
 }

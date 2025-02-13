@@ -10,10 +10,12 @@ import org.jfree.data.category.DefaultCategoryDataset;
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
-import java.util.Map;
+import java.util.*;
 
 public class ThroughputPlotter {
-    public static void plotThroughput(String plotTitle, Map<Long, Long> throughputData, String imgPath) {
+    public static void plotThroughput(String plotTitle, List<Long> timestamps, String imgPath) {
+        Map<Long, Double> throughputData = calculateThroughputOverTime(timestamps);
+
         JFreeChart chart = ChartFactory.createLineChart(
                 plotTitle, "Time (sec)", "Throughput (requests/sec)",
                 createDataset(throughputData), PlotOrientation.VERTICAL,true, true, false
@@ -25,21 +27,50 @@ public class ThroughputPlotter {
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
 
-        File imageFile = new File(imgPath);
         try {
-            ChartUtils.saveChartAsPNG(imageFile, chart, 800, 600);
+            ChartUtils.saveChartAsPNG(new File(imgPath), chart, 1000, 600);
         } catch (IOException e) {
             System.err.println("Error saving image to file");
         }
     }
 
-    private static DefaultCategoryDataset createDataset(Map<Long, Long> throughputData) {
-        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+    private static Map<Long, Double> calculateThroughputOverTime(List<Long> timestamps) {
+        Map<Long, Double> throughputMap = new TreeMap<>();
+        if (timestamps.isEmpty()) return throughputMap;
 
-        for (Map.Entry<Long, Long> entry : throughputData.entrySet()) {
-            long intervalStart = entry.getKey();
-            long requestCount = entry.getValue();
-            dataset.addValue(requestCount, "Throughput", String.valueOf(intervalStart));
+        long startTime = Collections.min(timestamps);
+
+        for (long timestamp : timestamps) {
+            long relativeSecond = (timestamp - startTime) / 1000;
+            throughputMap.put(relativeSecond, throughputMap.getOrDefault(relativeSecond, 0.0) + 1);
+        }
+
+        long endSecond = Collections.max(throughputMap.keySet());
+        for (long second = 0; second <= endSecond; second++) {
+            throughputMap.putIfAbsent(second, 0.0);
+        }
+
+        Map<Long, Double> smoothedMap = new TreeMap<>();
+        final int windowSize = 5;
+        for (long second = 0; second <= endSecond; second++) {
+            double sum = 0;
+            int count = 0;
+            for (int i = 0; i < windowSize; i++) {
+                long windowSecond = second - i;
+                if (throughputMap.containsKey(windowSecond)) {
+                    sum += throughputMap.get(windowSecond);
+                    count++;
+                }
+            }
+            smoothedMap.put(second, count > 0 ? sum / count : 0.0);
+        }
+        return smoothedMap;
+    }
+
+    private static DefaultCategoryDataset createDataset(Map<Long, Double> throughputData) {
+        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+        for (Map.Entry<Long, Double> entry : throughputData.entrySet()) {
+            dataset.addValue(entry.getValue(), "Throughput", entry.getKey().toString());
         }
         return dataset;
     }

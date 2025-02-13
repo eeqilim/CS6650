@@ -44,17 +44,16 @@ public class WorkerThread implements Runnable {
                 .build()) {
 
             for (int i = 0; i < numOfRequests; i++) {
-                String[] requestData = reqQueue.poll();
-
+                String[] requestData = reqQueue.take();
                 long startTime = System.currentTimeMillis();
-                assert requestData != null;
                 int responseCode = sendPostRequest(httpClient, requestData[0], requestData[1]);
                 long endTime = System.currentTimeMillis();
                 long latency = endTime - startTime;
                 metricsQueue.put(new String[]{String.valueOf(startTime), "POST", String.valueOf(latency), String.valueOf(responseCode)});
             }
         } catch (InterruptedException | IOException e) {
-            throw new RuntimeException(e);
+            Thread.currentThread().interrupt();
+            System.err.println("Worker thread interrupted: " + e.getMessage());
         }
     }
 

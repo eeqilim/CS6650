@@ -5,7 +5,8 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class Main {
-    private static final String SERVER_URL = "http://ec2-35-88-237-65.us-west-2.compute.amazonaws.com:8080/skiers-api-server_war/";
+//    private static final String SERVER_URL = "http://localhost:8080/skiers_api_server_war_exploded/";
+    private static final String SERVER_URL = "http://ec2-35-85-33-218.us-west-2.compute.amazonaws.com:8080/skiers-api-server_war/";
     private static final String CSV_PATH = "src/main/java/Part2/result.csv";
     private static final String IMG_PATH = "src/main/java/Part2/plot.png";
     private static final String PLOT_TITLE = "Throughput Over Time";
@@ -40,12 +41,12 @@ public class Main {
         secondaryLatch.await();
         secondaryExecutor.shutdown();
 
-        if (!initialExecutor.awaitTermination(3, TimeUnit.MINUTES)) {
+        if (!initialExecutor.awaitTermination(5, TimeUnit.MINUTES)) {
             System.err.println("Executor did not terminate. Force shutdown.");
             initialExecutor.shutdownNow();
         }
 
-        if (!secondaryExecutor.awaitTermination(3, TimeUnit.MINUTES)) {
+        if (!secondaryExecutor.awaitTermination(5, TimeUnit.MINUTES)) {
             System.err.println("Executor did not terminate. Force shutdown.");
             secondaryExecutor.shutdownNow();
         }
@@ -58,13 +59,14 @@ public class Main {
         System.out.println("Unsuccessful requests: " + (TOTAL_REQUESTS - successfulRequestCount.get()));
         System.out.println("Total time (ms): " + totalTime);
         System.out.println("Throughput (requests/sec): " + (successfulRequestCount.get() / (totalTime / 1000.0)));
+        System.out.println();
 
-        PerformanceAnalyzer.processMetrics(CSV_PATH, metricsQueue, IMG_PATH, PLOT_TITLE);
+        PerformanceAnalyzer.processMetrics(CSV_PATH, metricsQueue, IMG_PATH, PLOT_TITLE, successfulRequestCount);
     }
 
     private static void executeWorkerThreads(ExecutorService executor, CountDownLatch latch, int threadCount, int requestsPerThread) {
         for (int i = 0; i < threadCount; i++) {
-            executor.execute(() -> {
+            executor.submit(() -> {
                 try {
                     new WorkerThread(reqQueue, metricsQueue, requestsPerThread, successfulRequestCount).run();
                 } finally {
