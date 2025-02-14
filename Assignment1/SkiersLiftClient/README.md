@@ -13,11 +13,11 @@ Required Libraries:
 
 ## How to Run
 
-1. [Multithreaded Client](Main.java)
+1. [Multithreaded Client](src/main/java/Main.java)
 
     This runs the full multithreaded client that generates and sends 200,000 requests to the server for load testing.
 
-2. [Latency Test](SingleThreadLatency.java)
+2. [Latency Test](src/main/java/SingleThreadLatency.java)
    
     This tests how long a single request takes by running 10,000 requests sequentially in a single thread.
 
