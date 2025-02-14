@@ -44,7 +44,6 @@ Required Libraries:
     ```
    private static final int TOTAL_REQUESTS = 200000;
    private static final int INITIAL_THREAD_COUNT = 32;
-   private static final int SECOND_PHASE_THREAD_COUNT = 336;
    private static final int REQUESTS_PER_INITIAL_THREAD = 1000;
-   private static final int REQUESTS_PER_SECOND_PHASE_THREAD = 500;
+   private static final int SECOND_PHASE_THREAD_COUNT = 168;
     ```
