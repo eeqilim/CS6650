@@ -5,7 +5,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class Main {
-    private static final String SERVER_URL = "http://54.218.87.138:8080/skiers-api-server_war/";
+    private static final String SERVER_URL = "http://54.200.68.94:8080/skiers-api-server_war/";
     private static final String CSV_PATH = "src/main/java/Part2/result.csv";
     private static final String IMG_PATH = "src/main/java/Part2/plot.png";
     private static final String PLOT_TITLE = "Throughput Over Time";
@@ -21,13 +21,6 @@ public class Main {
     private static final AtomicInteger successfulRequestCount = new AtomicInteger(0);
 
     public static void main(String[] args) throws InterruptedException {
-        System.out.println("Client Configuration:");
-        System.out.println("Initial phase thread count: " + INITIAL_THREAD_COUNT);
-        System.out.println("Second phase thread count: " + SECOND_PHASE_THREAD_COUNT);
-        System.out.println("Requests per initial thread: " + REQUESTS_PER_INITIAL_THREAD);
-        System.out.println("Requests per second-phase thread: " + REQUESTS_PER_SECOND_PHASE_THREAD);
-        System.out.println();
-
         Thread generatorThread = new Thread(new RideEventGenerator(reqQueue, TOTAL_REQUESTS, SERVER_URL));
         generatorThread.start();
         generatorThread.join();
@@ -59,6 +52,13 @@ public class Main {
 
         long endTime = System.currentTimeMillis();
         long totalTime = endTime - startTime;
+
+        System.out.println("Client Configuration:");
+        System.out.println("Initial phase thread count: " + INITIAL_THREAD_COUNT);
+        System.out.println("Second phase thread count: " + SECOND_PHASE_THREAD_COUNT);
+        System.out.println("Requests per initial thread: " + REQUESTS_PER_INITIAL_THREAD);
+        System.out.println("Requests per second-phase thread: " + REQUESTS_PER_SECOND_PHASE_THREAD);
+        System.out.println();
 
         System.out.println("Total requests: " + TOTAL_REQUESTS);
         System.out.println("Successful requests: " + successfulRequestCount.get());

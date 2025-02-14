@@ -6,7 +6,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class SingleThreadLatency {
-    private static final String SERVER_URL = "http://54.218.87.138:8080/skiers-api-server_war/";
+    private static final String SERVER_URL = "http://54.200.68.94:8080/skiers-api-server_war/";
     private static final int REQUESTS_PER_THREAD = 10000;
     private static final int SINGLE_THREAD = 1;
     private static final BlockingQueue<String[]> reqQueue = new LinkedBlockingQueue<>();
