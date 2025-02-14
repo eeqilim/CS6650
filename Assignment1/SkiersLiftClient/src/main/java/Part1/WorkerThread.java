@@ -1,13 +1,17 @@
 package Part1;
 
+import org.apache.hc.client5.http.config.RequestConfig;
 import org.apache.hc.client5.http.impl.DefaultHttpRequestRetryStrategy;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
+import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManager;
+import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManagerBuilder;
 import org.apache.hc.core5.http.HttpResponse;
 import org.apache.hc.core5.http.io.entity.StringEntity;
 import org.apache.hc.core5.http.io.support.ClassicRequestBuilder;
 import org.apache.hc.core5.http.protocol.HttpContext;
 import org.apache.hc.core5.util.TimeValue;
+import org.apache.hc.core5.util.Timeout;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -30,17 +34,17 @@ public class WorkerThread implements Runnable {
 
     @Override
     public void run() {
+        PoolingHttpClientConnectionManager connectionManager = PoolingHttpClientConnectionManagerBuilder.create()
+                .setMaxConnTotal(2000)
+                .setMaxConnPerRoute(500)
+                .build();
+        RequestConfig requestConfig = RequestConfig.custom()
+                .setConnectionRequestTimeout(Timeout.ofSeconds(5))
+                .setResponseTimeout(Timeout.ofSeconds(5))
+                .build();
         try (CloseableHttpClient httpClient = HttpClients.custom()
-                .setRetryStrategy(new DefaultHttpRequestRetryStrategy(MAX_RETRIES, TimeValue.ofSeconds(1)) {
-                    @Override
-                    public boolean retryRequest(HttpResponse response, int executionCount, HttpContext context) {
-                        int statusCode = response.getCode();
-                        if (statusCode >= 400) {
-                            System.out.println("Attempt " + executionCount + " failed with status: " + statusCode);
-                        }
-                        return executionCount < MAX_RETRIES && statusCode >= 400;
-                    }
-                })
+                .setConnectionManager(connectionManager)
+                .setDefaultRequestConfig(requestConfig)
                 .build()) {
 
             for (int i = 0; i < numOfRequests; i++) {
@@ -58,22 +62,28 @@ public class WorkerThread implements Runnable {
     }
 
     private int sendPostRequest(CloseableHttpClient httpClient, String url, String jsonPayload) throws IOException {
-        System.out.println("Sending request to: " + url);
-        System.out.println("JSON Payload: " + jsonPayload);
-
-        return httpClient.execute(
-                ClassicRequestBuilder.post(url)
-                        .setHeader("Content-Type", "application/json")
-                        .setEntity(new StringEntity(jsonPayload, StandardCharsets.UTF_8))
-                        .build(),
-                response -> {
-                    int responseCode = response.getCode();
-                    if (responseCode == 201) {
-                        successfulRequestCount.incrementAndGet();
-                    } else {
-                        System.err.println("Request failed with status: " + responseCode);
-                    }
-                    return responseCode;
-                });
+        int retries = 0;
+        while (true) {
+            try {
+                return httpClient.execute(
+                        ClassicRequestBuilder.post(url)
+                                .setHeader("Content-Type", "application/json")
+                                .setEntity(new StringEntity(jsonPayload, StandardCharsets.UTF_8))
+                                .build(),
+                        response -> {
+                            int responseCode = response.getCode();
+                            if (responseCode == 201) {
+                                successfulRequestCount.incrementAndGet();
+                            } else {
+                                System.err.println("Request failed with status: " + responseCode);
+                            }
+                            return responseCode;
+                        });
+            } catch (IOException e) {
+                retries++;
+                System.err.println("IOException occurred, retrying " + retries + " out of " + MAX_RETRIES + ": " + e.getMessage());
+                if (retries >= MAX_RETRIES) throw e;
+            }
+        }
     }
 }

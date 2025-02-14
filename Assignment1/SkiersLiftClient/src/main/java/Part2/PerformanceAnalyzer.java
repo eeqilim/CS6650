@@ -4,52 +4,43 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.TimeUnit;
 
 public class PerformanceAnalyzer {
-    public static void processMetrics(String csvPath, BlockingQueue<String[]> metricsQueue, String imgPath, String plotTitle, AtomicInteger successfulRequestCount) {
-        List<Long> latencies = new ArrayList<>();
-        List<Long> timestamps = new ArrayList<>();
-
-        long[] timeRange = writeToCsv(csvPath, metricsQueue, latencies, timestamps);
-        long earliestStartTime = timeRange[0];
-        long latestEndTime = timeRange[1];
-
-        Collections.sort(latencies);
-        calculateMetrics(latencies, earliestStartTime, latestEndTime, successfulRequestCount.get());
-        ThroughputPlotter.plotThroughput(plotTitle, timestamps, imgPath);
-    }
-
-    private static long[] writeToCsv(String csvPath, BlockingQueue<String[]> metricsQueue, List<Long> latencies, List<Long> timestamps) {
+    public static void processMetrics(String csvPath, BlockingQueue<String[]> metricsQueue, String imgPath, String plotTitle) {
         long earliestStartTime = Long.MAX_VALUE;
         long latestEndTime = Long.MIN_VALUE;
+        List<Long> latencies = new ArrayList<>();
+        List<Long> timestamps = new ArrayList<>();
 
         try (FileWriter fileWriter = new FileWriter(csvPath)) {
             fileWriter.write("Start Time, Request Type, Latency, Response Code\n");
 
-            for (String[] metric : metricsQueue) {
+            while (true) {
+                String[] metric = metricsQueue.poll(5, TimeUnit.SECONDS);
+                if (metric == null) {
+                    break;
+                }
                 long startTime = Long.parseLong(metric[0]);
-                long latency = Long.parseLong((metric[2]));
+                long latency = Long.parseLong(metric[2]);
                 long endTime = startTime + latency;
 
-                if (startTime < earliestStartTime) {
-                    earliestStartTime = startTime;
-                }
-                if (endTime > latestEndTime) {
-                    latestEndTime = endTime;
-                }
+                if (startTime < earliestStartTime) earliestStartTime = startTime;
+                if (endTime > latestEndTime) latestEndTime = endTime;
 
-                timestamps.add(startTime);
                 latencies.add(latency);
+                timestamps.add(startTime);
                 fileWriter.write(String.join(",", metric) + "\n");
+                fileWriter.flush();
             }
-        } catch (IOException e) {
-            System.err.println("Error writing to CSV: " + e.getMessage());
+            calculateMetrics(latencies, earliestStartTime, latestEndTime, latencies.size());
+            ThroughputPlotter.plotThroughput(plotTitle, timestamps, imgPath);
+        } catch (IOException | InterruptedException e) {
+            System.err.println("Error processing metrics.");
         }
-        return new long[]{earliestStartTime, latestEndTime};
     }
 
-    private static void calculateMetrics(List<Long> latencies, long earliestStartTime, long latestEndTime, int successfulRequestCount) {
+    private static void calculateMetrics(List<Long> latencies, long earliestStartTime, long latestEndTime, int successfulRequest) {
         double meanResponseTime = latencies.stream()
                 .mapToLong(l -> l)
                 .average()
@@ -63,7 +54,7 @@ public class PerformanceAnalyzer {
         }
 
         double totalDurationInSeconds = (latestEndTime - earliestStartTime) / 1000.0;
-        double throughput = successfulRequestCount / totalDurationInSeconds;
+        double throughput = successfulRequest / totalDurationInSeconds;
 
         int p99Index = (int) Math.ceil(latencies.size() * 0.99) - 1;
         long p99ResponseTime = latencies.get(p99Index);

@@ -5,8 +5,8 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class Main {
-//    private static final String SERVER_URL = "http://localhost:8080/skiers_api_server_war_exploded/";
-    private static final String SERVER_URL = "http://ec2-35-85-33-218.us-west-2.compute.amazonaws.com:8080/skiers-api-server_war/";
+    private static final String SERVER_URL = "http://localhost:8080/skiers_api_server_war_exploded/";
+//    private static final String SERVER_URL = "http://ec2-54-191-83-42.us-west-2.compute.amazonaws.com:8080/skiers-api-server_war/";
     private static final String CSV_PATH = "src/main/java/Part2/result.csv";
     private static final String IMG_PATH = "src/main/java/Part2/plot.png";
     private static final String PLOT_TITLE = "Throughput Over Time";
@@ -61,7 +61,13 @@ public class Main {
         System.out.println("Throughput (requests/sec): " + (successfulRequestCount.get() / (totalTime / 1000.0)));
         System.out.println();
 
-        PerformanceAnalyzer.processMetrics(CSV_PATH, metricsQueue, IMG_PATH, PLOT_TITLE, successfulRequestCount);
+        ExecutorService metricsExecutor = Executors.newSingleThreadExecutor();
+        metricsExecutor.submit(() -> PerformanceAnalyzer.processMetrics(CSV_PATH, metricsQueue, IMG_PATH, PLOT_TITLE));
+        metricsExecutor.shutdown();
+        if (!metricsExecutor.awaitTermination(5, TimeUnit.MINUTES)) {
+            System.err.println("Executor did not terminate. Force shutdown.");
+            metricsExecutor.shutdownNow();
+        }
     }
 
     private static void executeWorkerThreads(ExecutorService executor, CountDownLatch latch, int threadCount, int requestsPerThread) {
