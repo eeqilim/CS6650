@@ -5,8 +5,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class Main {
-    private static final String SERVER_URL = "http://localhost:8080/skiers_api_server_war_exploded/";
-//    private static final String SERVER_URL = "http://ec2-54-191-83-42.us-west-2.compute.amazonaws.com:8080/skiers-api-server_war/";
+    private static final String SERVER_URL = "http://54.218.87.138:8080/skiers-api-server_war/";
     private static final String CSV_PATH = "src/main/java/Part2/result.csv";
     private static final String IMG_PATH = "src/main/java/Part2/plot.png";
     private static final String PLOT_TITLE = "Throughput Over Time";
@@ -14,14 +13,21 @@ public class Main {
     private static final int TOTAL_REQUESTS = 200000;
     private static final int INITIAL_THREAD_COUNT = 32;
     private static final int REQUESTS_PER_INITIAL_THREAD = 1000;
-    private static final int SECOND_PHASE_THREAD_COUNT = 336;
-    private static final int REQUESTS_PER_SECOND_PHASE_THREAD = 500;
+    private static final int SECOND_PHASE_THREAD_COUNT = 168;
+    private static final int REQUESTS_PER_SECOND_PHASE_THREAD = (TOTAL_REQUESTS - (INITIAL_THREAD_COUNT * REQUESTS_PER_INITIAL_THREAD)) / SECOND_PHASE_THREAD_COUNT;
 
     private static final BlockingQueue<String[]> reqQueue = new LinkedBlockingQueue<>();
     private static final BlockingQueue<String[]> metricsQueue = new LinkedBlockingQueue<>();
     private static final AtomicInteger successfulRequestCount = new AtomicInteger(0);
 
     public static void main(String[] args) throws InterruptedException {
+        System.out.println("Client Configuration:");
+        System.out.println("Initial phase thread count: " + INITIAL_THREAD_COUNT);
+        System.out.println("Second phase thread count: " + SECOND_PHASE_THREAD_COUNT);
+        System.out.println("Requests per initial thread: " + REQUESTS_PER_INITIAL_THREAD);
+        System.out.println("Requests per second-phase thread: " + REQUESTS_PER_SECOND_PHASE_THREAD);
+        System.out.println();
+
         Thread generatorThread = new Thread(new RideEventGenerator(reqQueue, TOTAL_REQUESTS, SERVER_URL));
         generatorThread.start();
         generatorThread.join();

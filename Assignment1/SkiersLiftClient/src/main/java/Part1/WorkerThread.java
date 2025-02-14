@@ -30,8 +30,8 @@ public class WorkerThread implements Runnable {
     @Override
     public void run() {
         PoolingHttpClientConnectionManager connectionManager = PoolingHttpClientConnectionManagerBuilder.create()
-                .setMaxConnTotal(2000)
-                .setMaxConnPerRoute(500)
+                .setMaxConnTotal(200)
+                .setMaxConnPerRoute(100)
                 .build();
         RequestConfig requestConfig = RequestConfig.custom()
                 .setConnectionRequestTimeout(Timeout.ofSeconds(5))
