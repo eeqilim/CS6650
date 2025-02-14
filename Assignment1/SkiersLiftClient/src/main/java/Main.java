@@ -1,5 +1,5 @@
-package Part1;
-
+import Part1.RideEventGenerator;
+import Part1.WorkerThread;
 import Part2.PerformanceAnalyzer;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;

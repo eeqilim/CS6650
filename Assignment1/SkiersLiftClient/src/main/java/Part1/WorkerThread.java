@@ -1,16 +1,12 @@
 package Part1;
 
 import org.apache.hc.client5.http.config.RequestConfig;
-import org.apache.hc.client5.http.impl.DefaultHttpRequestRetryStrategy;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
 import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManager;
 import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManagerBuilder;
-import org.apache.hc.core5.http.HttpResponse;
 import org.apache.hc.core5.http.io.entity.StringEntity;
 import org.apache.hc.core5.http.io.support.ClassicRequestBuilder;
-import org.apache.hc.core5.http.protocol.HttpContext;
-import org.apache.hc.core5.util.TimeValue;
 import org.apache.hc.core5.util.Timeout;
 
 import java.io.IOException;
@@ -22,7 +18,6 @@ public class WorkerThread implements Runnable {
     private final BlockingQueue<String[]> reqQueue;
     private final BlockingQueue<String[]> metricsQueue;
     private final int numOfRequests;
-    private final int MAX_RETRIES = 5;
     private final AtomicInteger successfulRequestCount;
 
     public WorkerThread(BlockingQueue<String[]> reqQueue, BlockingQueue<String[]> metricsQueue, int numOfRequests, AtomicInteger successfulRequestCount) {
@@ -81,6 +76,7 @@ public class WorkerThread implements Runnable {
                         });
             } catch (IOException e) {
                 retries++;
+                int MAX_RETRIES = 5;
                 System.err.println("IOException occurred, retrying " + retries + " out of " + MAX_RETRIES + ": " + e.getMessage());
                 if (retries >= MAX_RETRIES) throw e;
             }
