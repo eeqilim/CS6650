@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="war" name="skiers-api-server:war">
+    <output-path>$PROJECT_DIR$/out/artifacts/skiers_api_server_war</output-path>
+    <root id="archive" name="skiers-api-server_war.war">
+      <element id="artifact" artifact-name="skiers-api-server:war exploded" />
+    </root>
+  </artifact>
+</component>
