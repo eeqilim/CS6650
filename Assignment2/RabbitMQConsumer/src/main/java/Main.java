@@ -13,8 +13,8 @@ public class Main {
     private static final String BROKER_IP = "52.13.92.67";
     private static final String USERNAME = "admin";
     private static final String PASSWORD = "admin";
-    private static final int THREAD_COUNT = 35;
-    private static final int BATCH_SIZE = 30;
+    private static final int THREAD_COUNT = 300;
+    private static final int BATCH_SIZE = 100;
     private static final int TOTAL_MESSAGES = 200000;
 
     private static final ConcurrentHashMap<Integer, List<LiftRide>> skierData = new ConcurrentHashMap<>();
@@ -27,8 +27,6 @@ public class Main {
         factory.setPassword(PASSWORD);
         factory.setAutomaticRecoveryEnabled(true);
         factory.setNetworkRecoveryInterval(5000);
-
-        System.out.println("Connecting to RabbitMQ at " + BROKER_IP);
 
         ExecutorService executor = Executors.newFixedThreadPool(THREAD_COUNT);
         CountDownLatch latch = new CountDownLatch(THREAD_COUNT);
@@ -56,7 +54,6 @@ public class Main {
                                         channel.basicAck(envelope.getDeliveryTag(), false);
                                         messagesProcessed.incrementAndGet();
                                     } catch (Exception e) {
-                                        System.err.println("Error processing message: " + e.getMessage());
                                         channel.basicNack(envelope.getDeliveryTag(), false, true);
                                     }
                                 }
@@ -79,7 +76,6 @@ public class Main {
                     }));
 
                 } catch (Exception e) {
-                    System.err.println("Failed to create RabbitMQ channel: " + e.getMessage());
                     latch.countDown();
                 }
             });
@@ -87,8 +83,6 @@ public class Main {
 
         if (!latch.await(30, TimeUnit.SECONDS)) {
             System.err.println("Partial consumer threads initialized");
-        } else {
-            System.out.println("All consumer threads initialized successfully");
         }
 
         long startTime = System.currentTimeMillis();
@@ -96,16 +90,12 @@ public class Main {
         while (!executor.isTerminated() && messagesProcessed.get() < TOTAL_MESSAGES) {
             Thread.sleep(1000);
         }
-
-        System.out.println("All messages processed. Shutting down...");
         executor.shutdown();
         try {
             if (!executor.awaitTermination(30, TimeUnit.SECONDS)) {
-                System.err.println("Executor force shutdown");
                 executor.shutdownNow();
             }
         } catch (InterruptedException e) {
-            System.err.println("Executor shutdown interrupted: " + e.getMessage());
             executor.shutdownNow();
         }
 
@@ -114,7 +104,7 @@ public class Main {
 
         System.out.println("Messages processed: " + messagesProcessed.get());
         System.out.println("Total time (ms): " + totalTime);
-        System.out.println("RabbitMQ Consumer Throughput (requests/sec): " + (messagesProcessed.get() / (totalTime / 1000.0)));
+        System.out.println("Consumption Rate (msg/sec): " + (messagesProcessed.get() / (totalTime / 1000.0)));
     }
 
     private static void processMessage(String message) {
