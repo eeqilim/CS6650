@@ -5,7 +5,8 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class Main {
-    private static final String SERVER_URL = "http://54.200.110.175:8080/skiers-api-server_war/";
+    private static final String SERVER_URL = "http://lb-318240099.us-west-2.elb.amazonaws.com:8080/skiers-api-server_war/";
+//    private static final String SERVER_URL = "http://35.91.235.118:8080/skiers-api-server_war/";
 //    private static final String SERVER_URL = "http://localhost:8080/skiers_api_server_war_exploded/";
     private static final String CSV_PATH = "src/main/java/Part2/result.csv";
     private static final String IMG_PATH = "src/main/java/Part2/plot.png";
@@ -26,29 +27,22 @@ public class Main {
         generatorThread.start();
         generatorThread.join();
 
-        ExecutorService initialExecutor = Executors.newFixedThreadPool(INITIAL_THREAD_COUNT);
-        CountDownLatch initialLatch = new CountDownLatch(INITIAL_THREAD_COUNT);
+        ExecutorService executor = Executors.newFixedThreadPool(INITIAL_THREAD_COUNT + SECOND_PHASE_THREAD_COUNT);
         long startTime = System.currentTimeMillis();
-        executeWorkerThreads(initialExecutor, initialLatch, INITIAL_THREAD_COUNT, REQUESTS_PER_INITIAL_THREAD);
 
-        initialLatch.await();
-        initialExecutor.shutdown();
-
-        ExecutorService secondaryExecutor = Executors.newFixedThreadPool(SECOND_PHASE_THREAD_COUNT);
-        CountDownLatch secondaryLatch = new CountDownLatch(SECOND_PHASE_THREAD_COUNT);
-        executeWorkerThreads(secondaryExecutor, secondaryLatch, SECOND_PHASE_THREAD_COUNT, REQUESTS_PER_SECOND_PHASE_THREAD);
-
-        secondaryLatch.await();
-        secondaryExecutor.shutdown();
-
-        if (!initialExecutor.awaitTermination(5, TimeUnit.MINUTES)) {
-            System.err.println("Executor did not terminate. Force shutdown.");
-            initialExecutor.shutdownNow();
+        for (int i = 0; i < INITIAL_THREAD_COUNT; i++) {
+            executor.submit(() -> new WorkerThread(reqQueue, metricsQueue, REQUESTS_PER_INITIAL_THREAD, successfulRequestCount).run());
         }
 
-        if (!secondaryExecutor.awaitTermination(5, TimeUnit.MINUTES)) {
+        for (int i = 0; i < SECOND_PHASE_THREAD_COUNT; i++) {
+            executor.submit(() -> new WorkerThread(reqQueue, metricsQueue, REQUESTS_PER_SECOND_PHASE_THREAD, successfulRequestCount).run());
+        }
+
+        executor.shutdown();
+
+        if (!executor.awaitTermination(5, TimeUnit.MINUTES)) {
             System.err.println("Executor did not terminate. Force shutdown.");
-            secondaryExecutor.shutdownNow();
+            executor.shutdownNow();
         }
 
         long endTime = System.currentTimeMillis();
@@ -74,18 +68,6 @@ public class Main {
         if (!metricsExecutor.awaitTermination(5, TimeUnit.MINUTES)) {
             System.err.println("Executor did not terminate. Force shutdown.");
             metricsExecutor.shutdownNow();
-        }
-    }
-
-    private static void executeWorkerThreads(ExecutorService executor, CountDownLatch latch, int threadCount, int requestsPerThread) {
-        for (int i = 0; i < threadCount; i++) {
-            executor.submit(() -> {
-                try {
-                    new WorkerThread(reqQueue, metricsQueue, requestsPerThread, successfulRequestCount).run();
-                } finally {
-                    latch.countDown();
-                }
-            });
         }
     }
 }
