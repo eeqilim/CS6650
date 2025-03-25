@@ -8,7 +8,7 @@ import org.apache.commons.lang3.concurrent.EventCountCircuitBreaker;
 
 public class Main {
 //    private static final String SERVER_URL = "http://lb-639830833.us-west-2.elb.amazonaws.com:8080/skiers-api-server_war/";
-    private static final String SERVER_URL = "http://54.70.118.121:8080/skiers-api-server_war/";
+    private static final String SERVER_URL = "http://44.232.94.226:8080/skiers-api-server_war/";
 //    private static final String SERVER_URL = "http://localhost:8080/skiers_api_server_war_exploded/";
     private static final String CSV_PATH = "src/main/java/Part2/result.csv";
     private static final String IMG_PATH = "src/main/java/Part2/plot.png";
@@ -25,7 +25,7 @@ public class Main {
     private static final AtomicInteger successfulRequestCount = new AtomicInteger(0);
 
     public static void main(String[] args) throws InterruptedException {
-        EventCountCircuitBreaker circuitBreaker = new EventCountCircuitBreaker(5, 10, TimeUnit.SECONDS, 3, 5, TimeUnit.SECONDS);
+        EventCountCircuitBreaker circuitBreaker = new EventCountCircuitBreaker(3000, 1, TimeUnit.SECONDS, 3000, 1, TimeUnit.SECONDS);
 
         Thread generatorThread = new Thread(new RideEventGenerator(reqQueue, TOTAL_REQUESTS, SERVER_URL));
         generatorThread.start();
