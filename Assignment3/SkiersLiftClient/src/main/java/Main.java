@@ -3,6 +3,8 @@ import Part1.WorkerThread;
 import Part2.PerformanceAnalyzer;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.apache.commons.lang3.concurrent.EventCountCircuitBreaker;
+
 
 public class Main {
 //    private static final String SERVER_URL = "http://lb-639830833.us-west-2.elb.amazonaws.com:8080/skiers-api-server_war/";
@@ -23,6 +25,8 @@ public class Main {
     private static final AtomicInteger successfulRequestCount = new AtomicInteger(0);
 
     public static void main(String[] args) throws InterruptedException {
+        EventCountCircuitBreaker circuitBreaker = new EventCountCircuitBreaker(5, 10, TimeUnit.SECONDS, 3, 5, TimeUnit.SECONDS);
+
         Thread generatorThread = new Thread(new RideEventGenerator(reqQueue, TOTAL_REQUESTS, SERVER_URL));
         generatorThread.start();
         generatorThread.join();
@@ -31,11 +35,11 @@ public class Main {
         long startTime = System.currentTimeMillis();
 
         for (int i = 0; i < INITIAL_THREAD_COUNT; i++) {
-            executor.submit(() -> new WorkerThread(reqQueue, metricsQueue, REQUESTS_PER_INITIAL_THREAD, successfulRequestCount).run());
+            executor.submit(() -> new WorkerThread(reqQueue, metricsQueue, REQUESTS_PER_INITIAL_THREAD, successfulRequestCount, circuitBreaker).run());
         }
 
         for (int i = 0; i < SECOND_PHASE_THREAD_COUNT; i++) {
-            executor.submit(() -> new WorkerThread(reqQueue, metricsQueue, REQUESTS_PER_SECOND_PHASE_THREAD, successfulRequestCount).run());
+            executor.submit(() -> new WorkerThread(reqQueue, metricsQueue, REQUESTS_PER_SECOND_PHASE_THREAD, successfulRequestCount, circuitBreaker).run());
         }
 
         executor.shutdown();

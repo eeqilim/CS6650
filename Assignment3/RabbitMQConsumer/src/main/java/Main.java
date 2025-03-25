@@ -15,8 +15,8 @@ public class Main {
     private static final String BROKER_IP = "35.85.78.59";
     private static final String USERNAME = "admin";
     private static final String PASSWORD = "admin";
-    private static final int THREAD_COUNT = 100;
-    private static final int BATCH_SIZE = 30;
+    private static final int THREAD_COUNT = 150;
+    private static final int BATCH_SIZE = 50;
     private static final int TOTAL_MESSAGES = 200000;
 
     public static final String REDIS_HOST = "54.214.10.191";

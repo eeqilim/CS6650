@@ -1,5 +1,6 @@
 package Part1;
 
+import org.apache.commons.lang3.concurrent.EventCountCircuitBreaker;
 import org.apache.hc.client5.http.config.RequestConfig;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
@@ -19,12 +20,14 @@ public class WorkerThread implements Runnable {
     private final BlockingQueue<String[]> metricsQueue;
     private final int numOfRequests;
     private final AtomicInteger successfulRequestCount;
+    private final EventCountCircuitBreaker circuitBreaker;
 
-    public WorkerThread(BlockingQueue<String[]> reqQueue, BlockingQueue<String[]> metricsQueue, int numOfRequests, AtomicInteger successfulRequestCount) {
+    public WorkerThread(BlockingQueue<String[]> reqQueue, BlockingQueue<String[]> metricsQueue, int numOfRequests, AtomicInteger successfulRequestCount, EventCountCircuitBreaker circuitBreaker) {
         this.reqQueue = reqQueue;
         this.metricsQueue = metricsQueue;
         this.numOfRequests = numOfRequests;
         this.successfulRequestCount = successfulRequestCount;
+        this.circuitBreaker = circuitBreaker;
     }
 
     @Override
@@ -49,6 +52,7 @@ public class WorkerThread implements Runnable {
                 long endTime = System.currentTimeMillis();
                 long latency = endTime - startTime;
                 metricsQueue.put(new String[]{String.valueOf(startTime), "POST", String.valueOf(latency), String.valueOf(responseCode)});
+                circuitBreaker.incrementAndCheckState();
             }
         } catch (InterruptedException | IOException e) {
             Thread.currentThread().interrupt();
