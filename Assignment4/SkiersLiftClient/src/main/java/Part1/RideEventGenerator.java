@@ -24,10 +24,10 @@ public class RideEventGenerator implements Runnable {
         try {
             for (int i = 0; i < totalRequests; i++) {
                 int skierID = random.nextInt(100000) + 1;
-                int resortID = random.nextInt(10) + 1;
+                int resortID = 1;
                 int liftID = random.nextInt(40) + 1;
                 int seasonID = 2025;
-                int dayID = 1;
+                int dayID = 3; // TODO: Modify day value for each run with {1, 2, 3} to populate DB
                 int time = random.nextInt(360) + 1;
 
                 String url = serverUrl + "skiers/" + resortID + "/seasons/" + seasonID + "/days/" + dayID + "/skiers/" + skierID;

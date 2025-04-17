@@ -39,7 +39,8 @@ public class LiftRideService {
                 liftRide.getSkierID() >= 1 && liftRide.getSkierID() <= 100000 &&
                 liftRide.getResortID() >= 1 && liftRide.getResortID() <= 10 &&
                 liftRide.getLiftID() >= 1 && liftRide.getLiftID() <= 40 &&
-                liftRide.getSeasonID() == 2025 && liftRide.getDayID() == 1 &&
+                liftRide.getSeasonID() == 2025 &&
+                liftRide.getDayID() >= 1 && liftRide.getDayID() <= 3 &&
                 liftRide.getTime() >= 1 && liftRide.getTime() <= 360;
     }
 }
